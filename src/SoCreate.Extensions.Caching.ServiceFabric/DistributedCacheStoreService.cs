@@ -12,7 +12,7 @@ using Microsoft.ServiceFabric.Services.Runtime;
 
 namespace SoCreate.Extensions.Caching.ServiceFabric
 {
-    public class DistributedCacheStoreService : StatefulService, IServiceFabricCacheStoreService
+    public abstract class DistributedCacheStoreService : StatefulService, IServiceFabricCacheStoreService
     {
         private const string CacheStoreProperty = "CacheStore";
         private const string CacheStorePropertyValue = "true";

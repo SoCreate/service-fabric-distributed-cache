@@ -6,6 +6,7 @@ using Moq;
 using SoCreate.Extensions.Caching.ServiceFabric;
 using System;
 using System.Collections.Generic;
+using System.Fabric;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -20,7 +21,7 @@ namespace SoCreate.Extensions.Caching.Tests
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
-            [Greedy]DistributedCacheStoreService cacheStore)
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
         {
             var cacheValue = Encoding.UTF8.GetBytes("someValue");
             var currentTime = new DateTime(2019, 2, 1, 1, 0, 0);
@@ -41,7 +42,7 @@ namespace SoCreate.Extensions.Caching.Tests
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
-            [Greedy]DistributedCacheStoreService cacheStore)
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
         {
             var cacheValue = Encoding.UTF8.GetBytes("someValue");
             var currentTime = new DateTime(2019, 2, 1, 1, 0, 0);
@@ -63,7 +64,7 @@ namespace SoCreate.Extensions.Caching.Tests
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
-            [Greedy]DistributedCacheStoreService cacheStore)
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
         {
             var cacheValue = Encoding.UTF8.GetBytes("someValue");
             var currentTime = new DateTime(2019, 2, 1, 1, 0, 0);
@@ -85,7 +86,7 @@ namespace SoCreate.Extensions.Caching.Tests
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
-            [Greedy]DistributedCacheStoreService cacheStore)
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
         {
             var cacheValue = Encoding.UTF8.GetBytes("someValue");
             var currentTime = new DateTime(2019, 2, 1, 1, 0, 0);
@@ -112,7 +113,7 @@ namespace SoCreate.Extensions.Caching.Tests
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
-            [Greedy]DistributedCacheStoreService cacheStore)
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
         {
             var cacheValue = Encoding.UTF8.GetBytes("someValue");
             var currentTime = new DateTime(2019, 2, 1, 1, 0, 0);
@@ -134,7 +135,7 @@ namespace SoCreate.Extensions.Caching.Tests
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
-            [Greedy]DistributedCacheStoreService cacheStore)
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
         {
             var cacheValue = Encoding.UTF8.GetBytes("someValue");
             var currentTime = new DateTime(2019, 2, 1, 1, 0, 0);
@@ -156,7 +157,7 @@ namespace SoCreate.Extensions.Caching.Tests
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
-            [Greedy]DistributedCacheStoreService cacheStore)
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
         {
             var cacheValue = Encoding.UTF8.GetBytes("someValue");
             var currentTime = new DateTime(2019, 2, 1, 1, 0, 0);
@@ -187,7 +188,7 @@ namespace SoCreate.Extensions.Caching.Tests
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
-            [Greedy]DistributedCacheStoreService cacheStore)
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
         {
             var cacheValue = Encoding.UTF8.GetBytes("someValue");
             var currentTime = new DateTime(2019, 2, 1, 1, 0, 0);
@@ -227,7 +228,7 @@ namespace SoCreate.Extensions.Caching.Tests
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
-            [Greedy]DistributedCacheStoreService cacheStore)
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
         {
             var cacheValue = Encoding.UTF8.GetBytes("someValue");
             var currentTime = new DateTime(2019, 2, 1, 1, 0, 0);
@@ -282,6 +283,13 @@ namespace SoCreate.Extensions.Caching.Tests
             reliableDict.Setup(m => m.TryRemoveAsync(It.IsAny<ITransaction>(), It.IsAny<TKey>())).Returns((ITransaction t, TKey key) => { var r = getItem(key); inMemoryDict.Remove(key); return Task.FromResult(r); });
 
             return inMemoryDict;
+        }
+
+        class ServiceFabricDistributedCacheStoreService : DistributedCacheStoreService
+        {
+            public ServiceFabricDistributedCacheStoreService(StatefulServiceContext context, IReliableStateManagerReplica replica, ISystemClock clock) : base(context, replica, clock, (m) => { })
+            {
+            }
         }
     }
 }
