@@ -24,7 +24,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
         const string CacheStoreMetadataKey = "CacheStoreMetadata";
         private const string ListenerName = "CacheStoreServiceListener";
         private readonly Uri _serviceUri;
-        private readonly IReliableStateManagerReplica _reliableStateManagerReplica;
+        private readonly IReliableStateManagerReplica2 _reliableStateManagerReplica;
         private readonly Action<string> _log;
         private readonly ISystemClock _systemClock;
         private int _partitionCount;
@@ -50,7 +50,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
             }
         }
 
-        public DistributedCacheStoreService(StatefulServiceContext context, IReliableStateManagerReplica reliableStateManagerReplica, ISystemClock systemClock, Action<string> log)
+        public DistributedCacheStoreService(StatefulServiceContext context, IReliableStateManagerReplica2 reliableStateManagerReplica, ISystemClock systemClock, Action<string> log)
             : base(context, reliableStateManagerReplica)
         {
             _serviceUri = context.ServiceName;

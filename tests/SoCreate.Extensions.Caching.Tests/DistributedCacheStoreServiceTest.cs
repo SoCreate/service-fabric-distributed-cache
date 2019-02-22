@@ -17,7 +17,7 @@ namespace SoCreate.Extensions.Caching.Tests
     {
         [Theory, AutoMoqData]
         async void GetCachedItemAsync_GetItemThatDoesNotExist_NullResultReturned(
-            [Frozen]Mock<IReliableStateManagerReplica> stateManager,
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
@@ -38,7 +38,7 @@ namespace SoCreate.Extensions.Caching.Tests
 
         [Theory, AutoMoqData]
         async void GetCachedItemAsync_GetItemThatDoesHaveKeyAndIsIsNotAbsoluteExpired_CachedItemReturned(
-            [Frozen]Mock<IReliableStateManagerReplica> stateManager,
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
@@ -60,7 +60,7 @@ namespace SoCreate.Extensions.Caching.Tests
 
         [Theory, AutoMoqData]
         async void GetCachedItemAsync_GetItemThatDoesHaveKeyAndIsIsAbsoluteExpired_NullResultReturned(
-            [Frozen]Mock<IReliableStateManagerReplica> stateManager,
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
@@ -82,7 +82,7 @@ namespace SoCreate.Extensions.Caching.Tests
 
         [Theory, AutoMoqData]
         async void GetCachedItemAsync_GetItemThatDoesHaveKeyAndIsIsAbsoluteExpiredDoesNotSlideTime_ExpireTimeDoesNotSlide(
-            [Frozen]Mock<IReliableStateManagerReplica> stateManager,
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
@@ -109,7 +109,7 @@ namespace SoCreate.Extensions.Caching.Tests
 
         [Theory, AutoMoqData]
         async void GetCachedItemAsync_GetItemThatDoesHaveKeyAndIsIsNotSlidingExpired_CachedItemReturned(
-            [Frozen]Mock<IReliableStateManagerReplica> stateManager,
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
@@ -131,7 +131,7 @@ namespace SoCreate.Extensions.Caching.Tests
 
         [Theory, AutoMoqData]
         async void GetCachedItemAsync_GetItemThatDoesHaveKeyAndIsIsSlidingExpired_NullResultReturned(
-            [Frozen]Mock<IReliableStateManagerReplica> stateManager,
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
@@ -153,7 +153,7 @@ namespace SoCreate.Extensions.Caching.Tests
 
         [Theory, AutoMoqData]
         async void GetCachedItemAsync_GetItemThatDoesHaveKeyAndIsIsSlidingExpired_SlidedExpirationUpdates(
-            [Frozen]Mock<IReliableStateManagerReplica> stateManager,
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
@@ -184,7 +184,7 @@ namespace SoCreate.Extensions.Caching.Tests
 
         [Theory, AutoMoqData]
         async void SetCachedItemAsync_AddItemsToCreateLinkedDictionary_DictionaryCreatedWithItemsLinked(
-            [Frozen]Mock<IReliableStateManagerReplica> stateManager,
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
@@ -224,7 +224,7 @@ namespace SoCreate.Extensions.Caching.Tests
 
         [Theory, AutoMoqData]
         async void RemoveCachedItemAsync_RemoveItemsFromLinkedDictionary_ListStaysLinkedTogetherAfterItemsRemoved(
-            [Frozen]Mock<IReliableStateManagerReplica> stateManager,
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
             [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
             [Frozen]Mock<ISystemClock> systemClock,
@@ -271,7 +271,7 @@ namespace SoCreate.Extensions.Caching.Tests
             Assert.Equal((cacheValue.Length + 250) * cachedItems.Count, metadata["CacheStoreMetadata"].Size);
         }
 
-        private Dictionary<TKey, TValue> SetupInMemoryStores<TKey, TValue>(Mock<IReliableStateManagerReplica> stateManager, Mock<IReliableDictionary<TKey, TValue>> reliableDict) where TKey : IComparable<TKey>, IEquatable<TKey>
+        private Dictionary<TKey, TValue> SetupInMemoryStores<TKey, TValue>(Mock<IReliableStateManagerReplica2> stateManager, Mock<IReliableDictionary<TKey, TValue>> reliableDict) where TKey : IComparable<TKey>, IEquatable<TKey>
         {
             var inMemoryDict = new Dictionary<TKey, TValue>();
             Func<TKey, ConditionalValue<TValue>> getItem = (key) => inMemoryDict.ContainsKey(key) ? new ConditionalValue<TValue>(true, inMemoryDict[key]) : new ConditionalValue<TValue>(false, default(TValue));
@@ -287,7 +287,7 @@ namespace SoCreate.Extensions.Caching.Tests
 
         class ServiceFabricDistributedCacheStoreService : DistributedCacheStoreService
         {
-            public ServiceFabricDistributedCacheStoreService(StatefulServiceContext context, IReliableStateManagerReplica replica, ISystemClock clock) : base(context, replica, clock, (m) => { })
+            public ServiceFabricDistributedCacheStoreService(StatefulServiceContext context, IReliableStateManagerReplica2 replica, ISystemClock clock) : base(context, replica, clock, (m) => { })
             {
             }
         }
