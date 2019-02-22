@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Internal;
+using SoCreate.Extensions.Caching.ServiceFabric;
 using System;
 
-namespace SoCreate.Extensions.Caching.ServiceFabric
+namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ServiceFabricCachingServicesExtensions
     {
