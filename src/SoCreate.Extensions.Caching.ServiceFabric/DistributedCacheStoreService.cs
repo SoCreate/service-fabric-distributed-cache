@@ -33,9 +33,6 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
             : base(context)
         {
             _serviceUri = context.ServiceName;
-            if (log == null) {
-                log = (s) => { };
-            }
             _log = log;
             _systemClock = new SystemClock();
 
@@ -74,7 +71,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
             var cacheResult = await RetryHelper.ExecuteWithRetry(StateManager, async (tx, cancellationToken, state) =>
             {
-                _log($"Get cached item called with key: {key}");
+                _log?.Invoke($"Get cached item called with key: {key}");
                 return await cacheStore.TryGetValueAsync(tx, key);
             });
 
@@ -111,7 +108,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
             await RetryHelper.ExecuteWithRetry(StateManager, async (tx, cancellationToken, state) => 
             {
-                _log($"Set cached item called with key: {key}");
+                _log?.Invoke($"Set cached item called with key: {key}");
            
                 Func<string, Task<ConditionalValue<CachedItem>>> getCacheItem = async (string cacheKey) => await cacheStore.TryGetValueAsync(tx, cacheKey, LockMode.Update);
                 var linkedDictionaryHelper = new LinkedDictionaryHelper(getCacheItem, ByteSizeOffset);
@@ -153,7 +150,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
             await RetryHelper.ExecuteWithRetry(StateManager, async (tx, cancellationToken, state) =>
             {
-                _log($"Remove cached item called with key: {key}");
+                _log?.Invoke($"Remove cached item called with key: {key}");
 
                 var cacheResult = await cacheStore.TryRemoveAsync(tx, key);
                 if (cacheResult.HasValue)
@@ -207,7 +204,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
                     if (metadata.HasValue)
                     {
-                        _log($"Size: {metadata.Value.Size}  Max Size: {GetMaxSizeInBytes()}");
+                        _log?.Invoke($"Size: {metadata.Value.Size}  Max Size: {GetMaxSizeInBytes()}");
 
                         if (metadata.Value.Size > GetMaxSizeInBytes())
                         {
@@ -216,7 +213,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
                             var firstCachedItem = await getCacheItem(metadata.Value.FirstCacheKey);
 
-                            _log($"Auto Removing: {metadata.Value.FirstCacheKey}");
+                            _log?.Invoke($"Auto Removing: {metadata.Value.FirstCacheKey}");
 
                             var result = await linkedDictionaryHelper.Remove(metadata.Value, firstCachedItem.Value);
                             await ApplyChanges(tx, cacheStore, cacheStoreMetadata, result);
