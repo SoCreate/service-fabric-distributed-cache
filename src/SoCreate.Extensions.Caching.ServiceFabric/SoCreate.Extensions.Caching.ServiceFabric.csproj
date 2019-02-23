@@ -2,6 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Authors>Jami Lurock</Authors>
+    <Company>SoCreate</Company>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/SoCreate/service-fabric-distributed-cache/master/LICENSE</PackageLicenseUrl>
+    <Description>An implementation of the IDistributedCache that uses a Stateful Reliable Service Fabric service to act as the cache store. You can use this library to setup a distributed cache and use Service Fabric instead of Redis or SQL Server.</Description>
+    <RepositoryUrl>https://github.com/SoCreate/service-fabric-distributed-cache</RepositoryUrl>
+    <PackageTags>Cache DistributedCache ServiceFabric</PackageTags>
+    <PackageProjectUrl />
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
