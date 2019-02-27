@@ -12,6 +12,7 @@
     <PackageTags>Cache DistributedCache ServiceFabric</PackageTags>
     <PackageProjectUrl />
     <RepositoryType>git</RepositoryType>
+    <Copyright>© SoCreate. All rights reserved.</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
