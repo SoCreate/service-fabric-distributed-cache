@@ -2,7 +2,6 @@
 
  - [Issues and Bugs](#issue)
  - [Request/Add a Feature](#feature)
- - [Working on the Source Code](#dev)
  
 ## <a name="issue"></a> Found an Issue?
 If you find a bug in the source code or a mistake in the documentation, you can help us by
