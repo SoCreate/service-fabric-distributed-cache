@@ -16,6 +16,61 @@ namespace SoCreate.Extensions.Caching.Tests
     public class DistributedCacheStoreServiceTest
     {
         [Theory, AutoMoqData]
+        async void GetCachedItemAsync_GetItemThatExistsWithSlidingExpiration_ItemIsMovedToLastItem(
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
+            [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
+            [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
+            [Frozen]Mock<ISystemClock> systemClock,
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
+        {
+            var cacheValue = Encoding.UTF8.GetBytes("someValue");
+            var currentTime = new DateTime(2019, 2, 1, 1, 0, 0);
+
+            systemClock.SetupGet(m => m.UtcNow).Returns(currentTime);
+
+            SetupInMemoryStores(stateManager, cacheItemDict);
+            var metadata = SetupInMemoryStores(stateManager, metadataDict);
+
+            await cacheStore.SetCachedItemAsync("mykey1", cacheValue, TimeSpan.FromSeconds(10), null);
+            await cacheStore.SetCachedItemAsync("mykey2", cacheValue, TimeSpan.FromSeconds(10), null);
+            await cacheStore.SetCachedItemAsync("mykey3", cacheValue, TimeSpan.FromSeconds(10), null);
+
+            Assert.Equal("mykey3", metadata["CacheStoreMetadata"].LastCacheKey);
+
+            await cacheStore.GetCachedItemAsync("mykey2");
+
+            Assert.Equal("mykey2", metadata["CacheStoreMetadata"].LastCacheKey);
+        }
+
+        [Theory, AutoMoqData]
+        async void GetCachedItemAsync_GetItemThatExistsWithAbsoluteExpiration_ItemIsMovedToLastItem(
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
+            [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
+            [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
+            [Frozen]Mock<ISystemClock> systemClock,
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
+        {
+            var cacheValue = Encoding.UTF8.GetBytes("someValue");
+            var currentTime = new DateTime(2019, 2, 1, 1, 0, 0);
+            var expireTime = currentTime.AddSeconds(30);
+
+            systemClock.SetupGet(m => m.UtcNow).Returns(currentTime);
+
+            SetupInMemoryStores(stateManager, cacheItemDict);
+            var metadata = SetupInMemoryStores(stateManager, metadataDict);
+
+            await cacheStore.SetCachedItemAsync("mykey1", cacheValue, null, expireTime);
+            await cacheStore.SetCachedItemAsync("mykey2", cacheValue, null, expireTime);
+            await cacheStore.SetCachedItemAsync("mykey3", cacheValue, null, expireTime);
+
+            Assert.Equal("mykey3", metadata["CacheStoreMetadata"].LastCacheKey);
+
+            await cacheStore.GetCachedItemAsync("mykey2");
+
+            Assert.Equal("mykey2", metadata["CacheStoreMetadata"].LastCacheKey);
+        }
+
+        [Theory, AutoMoqData]
         async void GetCachedItemAsync_GetItemThatDoesNotExist_NullResultReturned(
             [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,

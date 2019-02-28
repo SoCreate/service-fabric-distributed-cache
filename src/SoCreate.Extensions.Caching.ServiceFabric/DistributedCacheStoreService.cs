@@ -83,11 +83,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
                 // cache item not expired
                 if (_systemClock.UtcNow < expireTime)
                 {
-                    // cache item is set to have sliding cache so update the expire time
-                    if (cachedItem.SlidingExpiration.HasValue)
-                    {
-                        await SetCachedItemAsync(key, cachedItem.Value, cachedItem.SlidingExpiration, cachedItem.AbsoluteExpiration);
-                    }
+                    await SetCachedItemAsync(key, cachedItem.Value, cachedItem.SlidingExpiration, cachedItem.AbsoluteExpiration);
                     return cachedItem.Value;
                 }
             }
