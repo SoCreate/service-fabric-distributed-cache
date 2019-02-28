@@ -64,7 +64,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
         {
-            SetAsync(key, value, new DistributedCacheEntryOptions()).Wait();
+            SetAsync(key, value, options).Wait();
         }
 
         public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default(CancellationToken))
