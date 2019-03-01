@@ -1,3 +1,10 @@
+# 1.0.5 (2019-03-01)
+
+<a name="1.0.5"></a>
+
+### Bug Fixes
+* **package information:** Update Nuget package information
+
 # 1.0.4 (2019-02-28)
 
 <a name="1.0.4"></a>
