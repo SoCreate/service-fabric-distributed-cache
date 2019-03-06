@@ -1,3 +1,11 @@
+# 1.0.6 (2019-03-06)
+
+<a name="1.0.6"></a>
+
+### Bug Fixes
+* **caching:** Fix issue with non-expired cached items getting removed from cache if cache is full and cached item was not recently retrieved
+* **caching:** Fix issue with cache being cleared when cache store process was restarted
+
 # 1.0.5 (2019-03-01)
 
 <a name="1.0.5"></a>
