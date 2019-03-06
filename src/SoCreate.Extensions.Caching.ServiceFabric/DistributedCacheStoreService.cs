@@ -27,7 +27,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
         private readonly IReliableStateManagerReplica2 _reliableStateManagerReplica;
         private readonly Action<string> _log;
         private readonly ISystemClock _systemClock;
-        private int _partitionCount;
+        private int _partitionCount = 1;
 
         public DistributedCacheStoreService(StatefulServiceContext context, Action<string> log = null)
             : base(context)
@@ -173,9 +173,6 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
             var cacheStore = await StateManager.GetOrAddAsync<IReliableDictionary<string, CachedItem>>(CacheStoreName);
             var cacheStoreMetadata = await StateManager.GetOrAddAsync<IReliableDictionary<string, CacheStoreMetadata>>(CacheStoreMetadataName);
 
-            await cacheStore.ClearAsync();
-            await cacheStoreMetadata.ClearAsync();
-
             while (true)
             {
                 await RemoveLeastRecentlyUsedCacheItemWhenOverMaxCacheSize(cancellationToken);
@@ -183,7 +180,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
             }
         }
 
-        private async Task RemoveLeastRecentlyUsedCacheItemWhenOverMaxCacheSize(CancellationToken cancellationToken)
+        protected async Task RemoveLeastRecentlyUsedCacheItemWhenOverMaxCacheSize(CancellationToken cancellationToken)
         {
             var cacheStore = await StateManager.GetOrAddAsync<IReliableDictionary<string, CachedItem>>(CacheStoreName);
             var cacheStoreMetadata = await StateManager.GetOrAddAsync<IReliableDictionary<string, CacheStoreMetadata>>(CacheStoreMetadataName);
@@ -196,26 +193,43 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
                 await RetryHelper.ExecuteWithRetry(StateManager, async (tx, cancelToken, state) =>
                 {
-                    var metadata = await cacheStoreMetadata.TryGetValueAsync(tx, CacheStoreMetadataKey, LockMode.Update);
+                var metadata = await cacheStoreMetadata.TryGetValueAsync(tx, CacheStoreMetadataKey, LockMode.Update);
 
-                    if (metadata.HasValue)
-                    {
-                        _log?.Invoke($"Size: {metadata.Value.Size}  Max Size: {GetMaxSizeInBytes()}");
+                if (metadata.HasValue)
+                {
+                    _log?.Invoke($"Size: {metadata.Value.Size}  Max Size: {GetMaxSizeInBytes()}");
 
                         if (metadata.Value.Size > GetMaxSizeInBytes())
                         {
                             Func<string, Task<ConditionalValue<CachedItem>>> getCacheItem = async (string cacheKey) => await cacheStore.TryGetValueAsync(tx, cacheKey, LockMode.Update);
                             var linkedDictionaryHelper = new LinkedDictionaryHelper(getCacheItem, ByteSizeOffset);
 
-                            var firstCachedItem = await getCacheItem(metadata.Value.FirstCacheKey);
+                            var firstItemKey = metadata.Value.FirstCacheKey;
+                            var firstCachedItem = (await getCacheItem(firstItemKey)).Value;
 
-                            _log?.Invoke($"Auto Removing: {metadata.Value.FirstCacheKey}");
+                            // Move item to last item if cached item is not expired
+                            if (firstCachedItem.AbsoluteExpiration > _systemClock.UtcNow)
+                            {
+                                // remove cached item
+                                var removeResult = await linkedDictionaryHelper.Remove(metadata.Value, firstCachedItem);
+                                await ApplyChanges(tx, cacheStore, cacheStoreMetadata, removeResult);
 
-                            var result = await linkedDictionaryHelper.Remove(metadata.Value, firstCachedItem.Value);
-                            await ApplyChanges(tx, cacheStore, cacheStoreMetadata, result);
-                            await cacheStore.TryRemoveAsync(tx, metadata.Value.FirstCacheKey);
+                                // add to last
+                                var addLastResult = await linkedDictionaryHelper.AddLast(removeResult.CacheStoreMetadata, firstItemKey, firstCachedItem, firstCachedItem.Value);
+                                await ApplyChanges(tx, cacheStore, cacheStoreMetadata, addLastResult);
 
-                            continueRemovingItems = result.CacheStoreMetadata.Size > GetMaxSizeInBytes();
+                                continueRemovingItems = addLastResult.CacheStoreMetadata.Size > GetMaxSizeInBytes();
+                            }
+                            else  // Remove 
+                            {
+                                _log?.Invoke($"Auto Removing: {metadata.Value.FirstCacheKey}");
+
+                                var result = await linkedDictionaryHelper.Remove(metadata.Value, firstCachedItem);
+                                await ApplyChanges(tx, cacheStore, cacheStoreMetadata, result);
+                                await cacheStore.TryRemoveAsync(tx, metadata.Value.FirstCacheKey);
+
+                                continueRemovingItems = result.CacheStoreMetadata.Size > GetMaxSizeInBytes();
+                            }
                         }
                     }
                 });

@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Fabric;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -326,6 +327,37 @@ namespace SoCreate.Extensions.Caching.Tests
             Assert.Equal((cacheValue.Length + 250) * cachedItems.Count, metadata["CacheStoreMetadata"].Size);
         }
 
+        [Theory, AutoMoqData]
+        async void RemoveLeastRecentlyUsedCacheItemWhenOverMaxCacheSize_RemoveItemsFromLinkedDictionary_DoesNotRemoveNonExpiredItems(
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
+            [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
+            [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
+            [Frozen]Mock<ISystemClock> systemClock,
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
+        {
+            var cacheValue = new byte[1000000];
+            var currentTime = new DateTime(2019, 2, 1, 1, 0, 0);
+
+            systemClock.SetupGet(m => m.UtcNow).Returns(currentTime);
+
+            var cachedItems = SetupInMemoryStores(stateManager, cacheItemDict);
+            var metadata = SetupInMemoryStores(stateManager, metadataDict);
+
+            await cacheStore.SetCachedItemAsync("1", cacheValue, TimeSpan.FromMinutes(10), null);
+            for (var i = 2; i <= 10; i++)
+            {
+                await cacheStore.SetCachedItemAsync(i.ToString(), cacheValue, TimeSpan.FromSeconds(10), null);
+            }
+
+            systemClock.SetupGet(m => m.UtcNow).Returns(currentTime.AddSeconds(10));
+            await cacheStore.RemoveLeastRecentlyUsedCacheItemWhenOverMaxCacheSize();
+
+            Assert.Single(cachedItems);
+            Assert.Equal("1", metadata["CacheStoreMetadata"].FirstCacheKey);
+            Assert.Equal("1", metadata["CacheStoreMetadata"].LastCacheKey);
+        }
+
+
         private Dictionary<TKey, TValue> SetupInMemoryStores<TKey, TValue>(Mock<IReliableStateManagerReplica2> stateManager, Mock<IReliableDictionary<TKey, TValue>> reliableDict) where TKey : IComparable<TKey>, IEquatable<TKey>
         {
             var inMemoryDict = new Dictionary<TKey, TValue>();
@@ -344,6 +376,13 @@ namespace SoCreate.Extensions.Caching.Tests
         {
             public ServiceFabricDistributedCacheStoreService(StatefulServiceContext context, IReliableStateManagerReplica2 replica, ISystemClock clock) : base(context, replica, clock, (m) => { })
             {
+            }
+
+            protected override int MaxCacheSizeInMegabytes => 1;
+
+            public async Task RemoveLeastRecentlyUsedCacheItemWhenOverMaxCacheSize()
+            {
+                await RemoveLeastRecentlyUsedCacheItemWhenOverMaxCacheSize(CancellationToken.None);
             }
         }
     }
