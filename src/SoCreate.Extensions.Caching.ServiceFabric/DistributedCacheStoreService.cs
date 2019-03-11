@@ -71,7 +71,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
             var cacheResult = await RetryHelper.ExecuteWithRetry(StateManager, async (tx, cancellationToken, state) =>
             {
-                _log?.Invoke($"Get cached item called with key: {key}");
+                _log?.Invoke($"Get cached item called with key: {key} on partition id: {Partition?.PartitionInfo.Id}");
                 return await cacheStore.TryGetValueAsync(tx, key);
             });
 
@@ -104,7 +104,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
             await RetryHelper.ExecuteWithRetry(StateManager, async (tx, cancellationToken, state) => 
             {
-                _log?.Invoke($"Set cached item called with key: {key}");
+                _log?.Invoke($"Set cached item called with key: {key} on partition id: {Partition?.PartitionInfo.Id}");
            
                 Func<string, Task<ConditionalValue<CachedItem>>> getCacheItem = async (string cacheKey) => await cacheStore.TryGetValueAsync(tx, cacheKey, LockMode.Update);
                 var linkedDictionaryHelper = new LinkedDictionaryHelper(getCacheItem, ByteSizeOffset);
@@ -146,7 +146,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
             await RetryHelper.ExecuteWithRetry(StateManager, async (tx, cancellationToken, state) =>
             {
-                _log?.Invoke($"Remove cached item called with key: {key}");
+                _log?.Invoke($"Remove cached item called with key: {key} on partition id: {Partition?.PartitionInfo.Id}");
 
                 var cacheResult = await cacheStore.TryRemoveAsync(tx, key);
                 if (cacheResult.HasValue)

@@ -8,6 +8,9 @@ using System.Fabric;
 using System.Fabric.Description;
 using System.Fabric.Query;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace SoCreate.Extensions.Caching.ServiceFabric
 {
@@ -57,21 +60,20 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
         private async Task<ServicePartitionInformation> GetPartitionInformationForCacheKey(string cacheKey)
         {
+            var md5 = MD5.Create();
+            var value = md5.ComputeHash(Encoding.ASCII.GetBytes(cacheKey));
+            var key = BitConverter.ToInt64(value, 0);
+
             if (_partitionList == null)
             {
                 _partitionList = await _fabricClient.QueryManager.GetPartitionListAsync(_serviceUri);
             }
 
-            int index = Math.Abs(cacheKey.GetHashCode() % _partitionList.Count);
-            var partition = _partitionList[index];
-
-            if (partition.PartitionInformation.Kind != ServicePartitionKind.Int64Range)
-            {
-                throw new InvalidOperationException("Only Int64 Range Partitions are supported.");
-            }
-
+            var partition = _partitionList.Single(p => ((Int64RangePartitionInformation)p.PartitionInformation).LowKey <= key && ((Int64RangePartitionInformation)p.PartitionInformation).HighKey >= key);
             return partition.PartitionInformation;
         }
+
+
 
         private async Task<Uri> LocateCacheStoreAsync()
         {
