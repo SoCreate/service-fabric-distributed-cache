@@ -41,6 +41,10 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
             if (_serviceUri == null)
             {
                 _serviceUri = await LocateCacheStoreAsync();
+                if (_serviceUri == null)
+                {
+                    throw new CacheStoreNotFoundException("Cache store not found in Service Fabric cluster.  Try setting the 'CacheStoreServiceUri' configuration option to the location of your cache store.");
+                }
             }
 
             var partitionInformation = await GetPartitionInformationForCacheKey(cacheKey);
