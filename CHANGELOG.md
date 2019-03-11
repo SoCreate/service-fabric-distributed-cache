@@ -1,3 +1,11 @@
+# 1.0.7 (2019-03-11)
+
+<a name="1.0.7"></a>
+
+### Bug Fixes
+* **caching:** Fix issue with getting a cached item not working consistently in the senario where your cache store has multiple partitions
+* **caching:** Add better error message when client can't find the cache store in the Service Fabric cluster
+
 # 1.0.6 (2019-03-06)
 
 <a name="1.0.6"></a>

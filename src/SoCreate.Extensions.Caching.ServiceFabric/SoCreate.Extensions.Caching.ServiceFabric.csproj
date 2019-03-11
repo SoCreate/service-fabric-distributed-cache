@@ -13,7 +13,7 @@
     <PackageProjectUrl>http://service-fabric-distributed-cache.socreate.it/</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
     <Copyright>© SoCreate. All rights reserved.</Copyright>
-    <Version>1.0.6</Version>
+    <Version>1.0.7</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/SoCreate/service-fabric-distributed-cache/master/assets/icon-64x64.png</PackageIconUrl>
   </PropertyGroup>
 
