@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\SoCreate.Extensions.Caching.ServiceFabric\SoCreate.Extensions.Caching.ServiceFabric.csproj" />
+    <ProjectReference Include="..\..\..\src\SoCreate.Extensions.Caching.ServiceFabric.Client\SoCreate.Extensions.Caching.ServiceFabric.Client.csproj" />
   </ItemGroup>
 
 </Project>

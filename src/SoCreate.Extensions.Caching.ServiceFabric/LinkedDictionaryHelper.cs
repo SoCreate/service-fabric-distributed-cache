@@ -1,10 +1,13 @@
 ﻿using Microsoft.ServiceFabric.Data;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+[assembly: InternalsVisibleTo("SoCreate.Extensions.Caching.Tests")]
 
 namespace SoCreate.Extensions.Caching.ServiceFabric
 {
+    
     class LinkedDictionaryHelper
     {
         private readonly Func<string, Task<ConditionalValue<CachedItem>>> _getCacheItem;
