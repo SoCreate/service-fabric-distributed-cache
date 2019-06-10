@@ -3,7 +3,7 @@
 # Service Fabric Distributed Cache
 An implementation of the IDistributedCache that uses a Stateful Reliable Service Fabric service to act as the cache store. You can use this library to setup a distributed cache and use Service Fabric instead of Redis or SQL Server.
 
-[![Build status](https://dev.azure.com/SoCreate/Service%20Fabric%20Distributed%20Cache/_apis/build/status/Service%20Fabric%20Distributed%20Cache)](https://dev.azure.com/SoCreate/Service%20Fabric%20Distributed%20Cache/_build/latest?definitionId=4)
+[![Build Status](https://dev.azure.com/SoCreate/Open%20Source%20Projects/_apis/build/status/SoCreate.service-fabric-distributed-cache?branchName=master)](https://dev.azure.com/SoCreate/Open%20Source%20Projects/_build/latest?definitionId=17&branchName=master)
 [![NuGet Badge](https://buildstats.info/nuget/SoCreate.Extensions.Caching.ServiceFabric)](https://www.nuget.org/packages/SoCreate.Extensions.Caching.ServiceFabric/)
 
 ## Documentation (<http://service-fabric-distributed-cache.socreate.it/>)
