@@ -12,8 +12,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" Version="3.3.638" />
-    <PackageReference Include="Microsoft.ServiceFabric.Services.Remoting" Version="3.3.638" />
+    <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" Version="3.4.664" />
+    <PackageReference Include="Microsoft.ServiceFabric.Services.Remoting" Version="3.4.664" />
   </ItemGroup>
 
   <ItemGroup>
