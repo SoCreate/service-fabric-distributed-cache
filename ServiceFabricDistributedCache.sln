@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.271
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{A07B5EB6-E848-4116-A8D0-A826331D98C6}") = "DistributedCache", "examples\DistributedCache\DistributedCache.sfproj", "{083FA0A4-F720-4F9E-97D1-77EB86A51F79}"
 EndProject
@@ -22,6 +22,8 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{083FA0A4-F720-4F9E-97D1-77EB86A51F79}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{083FA0A4-F720-4F9E-97D1-77EB86A51F79}.Debug|Any CPU.Build.0 = Debug|x64
+		{083FA0A4-F720-4F9E-97D1-77EB86A51F79}.Debug|Any CPU.Deploy.0 = Debug|x64
 		{083FA0A4-F720-4F9E-97D1-77EB86A51F79}.Debug|x64.ActiveCfg = Debug|x64
 		{083FA0A4-F720-4F9E-97D1-77EB86A51F79}.Debug|x64.Build.0 = Debug|x64
 		{083FA0A4-F720-4F9E-97D1-77EB86A51F79}.Debug|x64.Deploy.0 = Debug|x64
