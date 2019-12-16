@@ -1,3 +1,11 @@
+# 2.0.0 (2019-12-16)
+
+<a name="2.0.0"></a>
+
+### Upgrade
+* **Service Fabric** Upgrade Service Fabric to SDK v4.
+* **Example** Upgrade example project to .NET Core 3.1.
+
 # 1.0.7 (2019-03-11)
 
 <a name="1.0.7"></a>
