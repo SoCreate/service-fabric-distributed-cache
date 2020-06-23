@@ -11,6 +11,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 {
     class ServiceFabricDistributedCache : IDistributedCache
     {
+        private const string CacheStoreExceptionMessage = "An exception occurred while accessing cache store.";
         private readonly IDistributedCacheStoreLocator _distributedCacheStoreLocator;
         private readonly ISystemClock _systemClock;
         private readonly Guid _cacheStoreId;
@@ -33,7 +34,8 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
             key = FormatCacheKey(key);
             var proxy = await _distributedCacheStoreLocator.GetCacheStoreProxy(key).ConfigureAwait(false);
-            return await proxy.GetCachedItemAsync(key).ConfigureAwait(false);
+
+            return await ExecuteWithExceptionWrapping(async () => await proxy.GetCachedItemAsync(key).ConfigureAwait(false));
         }
 
         public void Refresh(string key)
@@ -59,7 +61,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
             key = FormatCacheKey(key);
             var proxy = await _distributedCacheStoreLocator.GetCacheStoreProxy(key).ConfigureAwait(false);
-            await proxy.RemoveCachedItemAsync(key).ConfigureAwait(false);
+            await ExecuteWithExceptionWrapping(async () => await proxy.RemoveCachedItemAsync(key).ConfigureAwait(false));
         }
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
@@ -77,7 +79,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
             key = FormatCacheKey(key);
             var proxy = await _distributedCacheStoreLocator.GetCacheStoreProxy(key).ConfigureAwait(false);
-            await proxy.SetCachedItemAsync(key, value, options.SlidingExpiration, absoluteExpireTime).ConfigureAwait(false);
+            await ExecuteWithExceptionWrapping(async () => await proxy.SetCachedItemAsync(key, value, options.SlidingExpiration, absoluteExpireTime).ConfigureAwait(false));
         }
 
         private DateTimeOffset? GetAbsoluteExpiration(DateTimeOffset utcNow, DistributedCacheEntryOptions options)
@@ -103,6 +105,30 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
         private string FormatCacheKey(string key)
         {
             return $"{_cacheStoreId}-{key}";
+        }
+
+        private static async Task ExecuteWithExceptionWrapping(Func<Task> callback)
+        {
+            try
+            {
+                await callback().ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                throw new CacheStoreException(CacheStoreExceptionMessage, exception);
+            }
+        }
+
+        private static async Task<T> ExecuteWithExceptionWrapping<T>(Func<Task<T>> callback)
+        {
+            try
+            {
+                return await callback().ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                throw new CacheStoreException(CacheStoreExceptionMessage, exception);
+            }
         }
     }
 }

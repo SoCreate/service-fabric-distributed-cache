@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SoCreate.Extensions.Caching.ServiceFabric;
+using System;
 
 namespace ClientApp
 {
@@ -19,6 +21,7 @@ namespace ClientApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<ServiceFabricCacheOptions>(o => o.RetryTimeout = TimeSpan.FromSeconds(5));
             services.AddDistributedServiceFabricCache();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
