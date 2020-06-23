@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.ServiceFabric.Services.Communication.Client;
 
 namespace SoCreate.Extensions.Caching.ServiceFabric
 {
@@ -21,6 +22,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
         private const string ListenerName = "CacheStoreServiceListener";
         private Uri _serviceUri;
         private readonly string _endpointName;
+        private readonly TimeSpan? _retryTimeout;
         private readonly FabricClient _fabricClient;
         private ServicePartitionList _partitionList;
         private readonly ConcurrentDictionary<Guid, IServiceFabricCacheStoreService> _cacheStores;
@@ -30,7 +32,8 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
             var fabricOptions = options.Value;
             _serviceUri = fabricOptions.CacheStoreServiceUri;
             _endpointName = fabricOptions.CacheStoreEndpointName ?? ListenerName;
-                       
+            _retryTimeout = fabricOptions.RetryTimeout;
+
             _fabricClient = new FabricClient();
             _cacheStores = new ConcurrentDictionary<Guid, IServiceFabricCacheStoreService>();
         }
@@ -52,13 +55,14 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
             return _cacheStores.GetOrAdd(partitionInformation.Id, key => {
                 var info = (Int64RangePartitionInformation)partitionInformation;
                 var resolvedPartition = new ServicePartitionKey(info.LowKey);
+                var retrySettings = _retryTimeout.HasValue ? new OperationRetrySettings(_retryTimeout.Value) : null;
 
                 var proxyFactory = new ServiceProxyFactory((c) =>
                 {
                     return new FabricTransportServiceRemotingClientFactory();
-                });
+                }, retrySettings);
 
-                return proxyFactory.CreateServiceProxy<IServiceFabricCacheStoreService>(_serviceUri, resolvedPartition, Microsoft.ServiceFabric.Services.Communication.Client.TargetReplicaSelector.Default, _endpointName);
+                return proxyFactory.CreateServiceProxy<IServiceFabricCacheStoreService>(_serviceUri, resolvedPartition, TargetReplicaSelector.Default, _endpointName);
             });
         }
 

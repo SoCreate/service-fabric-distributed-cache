@@ -1,10 +1,8 @@
-﻿using System;
-
-namespace SoCreate.Extensions.Caching.ServiceFabric
+﻿namespace SoCreate.Extensions.Caching.ServiceFabric
 {
-    class CacheStoreNotFoundException : Exception
+    class CacheStoreNotFoundException : CacheStoreException
     {
-        public CacheStoreNotFoundException(string message) : base(message)
+        internal CacheStoreNotFoundException(string message) : base(message)
         {
 
         }

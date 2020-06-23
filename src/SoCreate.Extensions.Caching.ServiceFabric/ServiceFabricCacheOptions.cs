@@ -10,5 +10,6 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
         public Uri CacheStoreServiceUri { get; set; }
         public string CacheStoreEndpointName { get; set; }
         public Guid CacheStoreId { get; set; }
+        public TimeSpan? RetryTimeout { get; set; }
     }
 }
