@@ -12,6 +12,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.ServiceFabric.Services.Communication.Client;
+using Microsoft.VisualStudio.Threading;
 
 namespace SoCreate.Extensions.Caching.ServiceFabric
 {
@@ -20,39 +21,33 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
         private const string CacheStoreProperty = "CacheStore";
         private const string CacheStorePropertyValue = "true";
         private const string ListenerName = "CacheStoreServiceListener";
-        private Uri _serviceUri;
+        private AsyncLazy<Uri> _serviceUri;
         private readonly string _endpointName;
         private readonly TimeSpan? _retryTimeout;
         private readonly FabricClient _fabricClient;
-        private ServicePartitionList _partitionList;
+        private AsyncLazy<ServicePartitionList> _partitionList;
         private readonly ConcurrentDictionary<Guid, IServiceFabricCacheStoreService> _cacheStores;
+        private readonly ServiceFabricCacheOptions _options;
 
         public DistributedCacheStoreLocator(IOptions<ServiceFabricCacheOptions> options)
         {
-            var fabricOptions = options.Value;
-            _serviceUri = fabricOptions.CacheStoreServiceUri;
-            _endpointName = fabricOptions.CacheStoreEndpointName ?? ListenerName;
-            _retryTimeout = fabricOptions.RetryTimeout;
-
+            _options = options.Value;
+            _endpointName = _options.CacheStoreEndpointName ?? ListenerName;
+            _retryTimeout = _options.RetryTimeout;
             _fabricClient = new FabricClient();
             _cacheStores = new ConcurrentDictionary<Guid, IServiceFabricCacheStoreService>();
+            _serviceUri = new AsyncLazy<Uri>(LocateCacheStoreAsync);
+            _partitionList = new AsyncLazy<ServicePartitionList>(GetPartitionListAsync);
         }
 
         public async Task<IServiceFabricCacheStoreService> GetCacheStoreProxy(string cacheKey)
         {
-            // Try to locate a cache store if one is not configured
-            if (_serviceUri == null)
+            var partitionInformation = await GetPartitionInformationForCacheKeyAsync(cacheKey);
+
+            var serviceUri = await _serviceUri.GetValueAsync();
+
+            return _cacheStores.GetOrAdd(partitionInformation.Id, key =>
             {
-                _serviceUri = await LocateCacheStoreAsync();
-                if (_serviceUri == null)
-                {
-                    throw new CacheStoreNotFoundException("Cache store not found in Service Fabric cluster.  Try setting the 'CacheStoreServiceUri' configuration option to the location of your cache store.");
-                }
-            }
-
-            var partitionInformation = await GetPartitionInformationForCacheKey(cacheKey);
-
-            return _cacheStores.GetOrAdd(partitionInformation.Id, key => {
                 var info = (Int64RangePartitionInformation)partitionInformation;
                 var resolvedPartition = new ServicePartitionKey(info.LowKey);
                 var retrySettings = _retryTimeout.HasValue ? new OperationRetrySettings(_retryTimeout.Value) : null;
@@ -62,29 +57,32 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
                     return new FabricTransportServiceRemotingClientFactory();
                 }, retrySettings);
 
-                return proxyFactory.CreateServiceProxy<IServiceFabricCacheStoreService>(_serviceUri, resolvedPartition, TargetReplicaSelector.Default, _endpointName);
+                return proxyFactory.CreateServiceProxy<IServiceFabricCacheStoreService>(serviceUri, resolvedPartition, TargetReplicaSelector.Default, _endpointName);
             });
         }
 
-        private async Task<ServicePartitionInformation> GetPartitionInformationForCacheKey(string cacheKey)
+        private async Task<ServicePartitionInformation> GetPartitionInformationForCacheKeyAsync(string cacheKey)
         {
             var md5 = MD5.Create();
             var value = md5.ComputeHash(Encoding.ASCII.GetBytes(cacheKey));
             var key = BitConverter.ToInt64(value, 0);
 
-            if (_partitionList == null)
-            {
-                _partitionList = await _fabricClient.QueryManager.GetPartitionListAsync(_serviceUri);
-            }
-
-            var partition = _partitionList.Single(p => ((Int64RangePartitionInformation)p.PartitionInformation).LowKey <= key && ((Int64RangePartitionInformation)p.PartitionInformation).HighKey >= key);
+            var partition = (await _partitionList.GetValueAsync()).Single(p => ((Int64RangePartitionInformation)p.PartitionInformation).LowKey <= key && ((Int64RangePartitionInformation)p.PartitionInformation).HighKey >= key);
             return partition.PartitionInformation;
         }
 
+        private async Task<ServicePartitionList> GetPartitionListAsync()
+        {
+            return await _fabricClient.QueryManager.GetPartitionListAsync(await _serviceUri.GetValueAsync());
+        }
 
 
         private async Task<Uri> LocateCacheStoreAsync()
         {
+            if (_options.CacheStoreServiceUri != null)
+            {
+                return _options.CacheStoreServiceUri;
+            }
             try
             {
                 bool hasPages = true;
@@ -108,7 +106,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
             }
             catch { }
 
-            return null;
+            throw new CacheStoreNotFoundException("Cache store not found in Service Fabric cluster.  Try setting the 'CacheStoreServiceUri' configuration option to the location of your cache store."); ;
         }
 
         private async Task<Uri> LocateCacheStoreServiceInApplicationAsync(Uri applicationName)

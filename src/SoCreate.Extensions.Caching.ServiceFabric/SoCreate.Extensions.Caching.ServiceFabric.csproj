@@ -13,7 +13,7 @@
     <PackageProjectUrl>http://service-fabric-distributed-cache.socreate.it/</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
     <Copyright>© SoCreate. All rights reserved.</Copyright>
-    <Version>2.1.1</Version>
+    <Version>2.1.2</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/SoCreate/service-fabric-distributed-cache/master/assets/icon-64x64.png</PackageIconUrl>
   </PropertyGroup>
 
@@ -22,6 +22,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.*" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="3.1.*" />
     <PackageReference Include="Microsoft.ServiceFabric.Services.Remoting" Version="4.0.*" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="16.6.13" />
   </ItemGroup>
 
 </Project>
