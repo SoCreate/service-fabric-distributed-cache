@@ -193,7 +193,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
                 await RetryHelper.ExecuteWithRetry(StateManager, async (tx, cancelToken, state) =>
                 {
-                var metadata = await cacheStoreMetadata?.TryGetValueAsync(tx, CacheStoreMetadataKey, LockMode.Update);
+                var metadata = await cacheStoreMetadata.TryGetValueAsync(tx, CacheStoreMetadataKey, LockMode.Update);
 
                 if (metadata.HasValue && !string.IsNullOrEmpty(metadata.Value.FirstCacheKey))
                 {

@@ -347,7 +347,6 @@ namespace SoCreate.Extensions.Caching.Tests
 
             metadata["CacheStoreMetadata"] = new CacheStoreMetadata(int.MaxValue, "Garbage", "3");
             await cacheStore.RemoveLeastRecentlyUsedCacheItemWhenOverMaxCacheSize();
-
         }
 
         [Theory, AutoMoqData]
@@ -385,17 +384,7 @@ namespace SoCreate.Extensions.Caching.Tests
         {
             var inMemoryDict = new Dictionary<TKey, TValue>();
             Func<TKey, ConditionalValue<TValue>> getItem = (key) => inMemoryDict.ContainsKey(key) ? new ConditionalValue<TValue>(true, inMemoryDict[key]) : new ConditionalValue<TValue>(false, default(TValue));
-            Func<TKey, TValue, ConditionalValue<TValue>> setItem = (key, val) =>
-            {
-                if (inMemoryDict.ContainsKey(key)) {
-                    inMemoryDict[key] = val;
-                } else
-                {
-                    inMemoryDict.Add(key, val);
-                }                    
-                return new ConditionalValue<TValue>(true, inMemoryDict[key]);                    
-            };
-
+            
             stateManager.Setup(m => m.GetOrAddAsync<IReliableDictionary<TKey, TValue>>(It.IsAny<string>())).Returns(Task.FromResult(reliableDict.Object));
             reliableDict.Setup(m => m.TryGetValueAsync(It.IsAny<ITransaction>(), It.IsAny<TKey>())).Returns((ITransaction t, TKey key) => Task.FromResult(getItem(key)));
             reliableDict.Setup(m => m.TryGetValueAsync(It.IsAny<ITransaction>(), It.IsAny<TKey>(), It.IsAny<LockMode>())).Returns((ITransaction t, TKey key, LockMode l) => Task.FromResult(getItem(key)));
