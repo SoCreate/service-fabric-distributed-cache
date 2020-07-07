@@ -328,6 +328,28 @@ namespace SoCreate.Extensions.Caching.Tests
         }
 
         [Theory, AutoMoqData]
+        async void RemoveCachedItemAsync_RemoveItemsFromLinkedDictionary_RemovalWorksWithMalformedMetadata(
+            [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
+            [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
+            [Frozen]Mock<IReliableDictionary<string, CacheStoreMetadata>> metadataDict,
+            [Greedy]ServiceFabricDistributedCacheStoreService cacheStore)
+        {
+            var cacheValue = Encoding.UTF8.GetBytes("someValue");
+
+            var metadata = SetupInMemoryStores(stateManager, metadataDict);
+
+            await cacheStore.SetCachedItemAsync("1", cacheValue, TimeSpan.FromSeconds(10), null);
+            await cacheStore.SetCachedItemAsync("2", cacheValue, TimeSpan.FromSeconds(10), null);
+            await cacheStore.SetCachedItemAsync("3", cacheValue, TimeSpan.FromSeconds(10), null);
+
+            metadata["CacheStoreMetadata"] = new CacheStoreMetadata(int.MaxValue, null, "3");
+            await cacheStore.RemoveLeastRecentlyUsedCacheItemWhenOverMaxCacheSize();
+
+            metadata["CacheStoreMetadata"] = new CacheStoreMetadata(int.MaxValue, "Garbage", "3");
+            await cacheStore.RemoveLeastRecentlyUsedCacheItemWhenOverMaxCacheSize();
+        }
+
+        [Theory, AutoMoqData]
         async void RemoveLeastRecentlyUsedCacheItemWhenOverMaxCacheSize_RemoveItemsFromLinkedDictionary_DoesNotRemoveNonExpiredItems(
             [Frozen]Mock<IReliableStateManagerReplica2> stateManager,
             [Frozen]Mock<IReliableDictionary<string, CachedItem>> cacheItemDict,
@@ -362,7 +384,7 @@ namespace SoCreate.Extensions.Caching.Tests
         {
             var inMemoryDict = new Dictionary<TKey, TValue>();
             Func<TKey, ConditionalValue<TValue>> getItem = (key) => inMemoryDict.ContainsKey(key) ? new ConditionalValue<TValue>(true, inMemoryDict[key]) : new ConditionalValue<TValue>(false, default(TValue));
-
+            
             stateManager.Setup(m => m.GetOrAddAsync<IReliableDictionary<TKey, TValue>>(It.IsAny<string>())).Returns(Task.FromResult(reliableDict.Object));
             reliableDict.Setup(m => m.TryGetValueAsync(It.IsAny<ITransaction>(), It.IsAny<TKey>())).Returns((ITransaction t, TKey key) => Task.FromResult(getItem(key)));
             reliableDict.Setup(m => m.TryGetValueAsync(It.IsAny<ITransaction>(), It.IsAny<TKey>(), It.IsAny<LockMode>())).Returns((ITransaction t, TKey key, LockMode l) => Task.FromResult(getItem(key)));

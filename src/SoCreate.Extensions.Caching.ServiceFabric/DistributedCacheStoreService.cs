@@ -195,7 +195,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
                 {
                 var metadata = await cacheStoreMetadata.TryGetValueAsync(tx, CacheStoreMetadataKey, LockMode.Update);
 
-                if (metadata.HasValue)
+                if (metadata.HasValue && !string.IsNullOrEmpty(metadata.Value.FirstCacheKey))
                 {
                     _log?.Invoke($"Size: {metadata.Value.Size}  Max Size: {GetMaxSizeInBytes()}");
 
@@ -205,30 +205,34 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
                             var linkedDictionaryHelper = new LinkedDictionaryHelper(getCacheItem, ByteSizeOffset);
 
                             var firstItemKey = metadata.Value.FirstCacheKey;
+
                             var firstCachedItem = (await getCacheItem(firstItemKey)).Value;
 
-                            // Move item to last item if cached item is not expired
-                            if (firstCachedItem.AbsoluteExpiration > _systemClock.UtcNow)
+                            if (firstCachedItem != null)
                             {
-                                // remove cached item
-                                var removeResult = await linkedDictionaryHelper.Remove(metadata.Value, firstCachedItem);
-                                await ApplyChanges(tx, cacheStore, cacheStoreMetadata, removeResult);
+                                // Move item to last item if cached item is not expired
+                                if (firstCachedItem.AbsoluteExpiration > _systemClock.UtcNow)
+                                {
+                                    // remove cached item
+                                    var removeResult = await linkedDictionaryHelper.Remove(metadata.Value, firstCachedItem);
+                                    await ApplyChanges(tx, cacheStore, cacheStoreMetadata, removeResult);
 
-                                // add to last
-                                var addLastResult = await linkedDictionaryHelper.AddLast(removeResult.CacheStoreMetadata, firstItemKey, firstCachedItem, firstCachedItem.Value);
-                                await ApplyChanges(tx, cacheStore, cacheStoreMetadata, addLastResult);
+                                    // add to last
+                                    var addLastResult = await linkedDictionaryHelper.AddLast(removeResult.CacheStoreMetadata, firstItemKey, firstCachedItem, firstCachedItem.Value);
+                                    await ApplyChanges(tx, cacheStore, cacheStoreMetadata, addLastResult);
 
-                                continueRemovingItems = addLastResult.CacheStoreMetadata.Size > GetMaxSizeInBytes();
-                            }
-                            else  // Remove 
-                            {
-                                _log?.Invoke($"Auto Removing: {metadata.Value.FirstCacheKey}");
+                                    continueRemovingItems = addLastResult.CacheStoreMetadata.Size > GetMaxSizeInBytes();
+                                }
+                                else  // Remove 
+                                {
+                                    _log?.Invoke($"Auto Removing: {metadata.Value.FirstCacheKey}");
 
-                                var result = await linkedDictionaryHelper.Remove(metadata.Value, firstCachedItem);
-                                await ApplyChanges(tx, cacheStore, cacheStoreMetadata, result);
-                                await cacheStore.TryRemoveAsync(tx, metadata.Value.FirstCacheKey);
+                                    var result = await linkedDictionaryHelper.Remove(metadata.Value, firstCachedItem);
+                                    await ApplyChanges(tx, cacheStore, cacheStoreMetadata, result);
+                                    await cacheStore.TryRemoveAsync(tx, metadata.Value.FirstCacheKey);
 
-                                continueRemovingItems = result.CacheStoreMetadata.Size > GetMaxSizeInBytes();
+                                    continueRemovingItems = result.CacheStoreMetadata.Size > GetMaxSizeInBytes();
+                                }
                             }
                         }
                     }
