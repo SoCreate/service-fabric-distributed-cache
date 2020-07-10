@@ -336,6 +336,7 @@ namespace SoCreate.Extensions.Caching.Tests
         {
             var cacheValue = Encoding.UTF8.GetBytes("someValue");
 
+            var cachedItems = SetupInMemoryStores(stateManager, cacheItemDict);
             var metadata = SetupInMemoryStores(stateManager, metadataDict);
 
             await cacheStore.SetCachedItemAsync("1", cacheValue, TimeSpan.FromSeconds(10), null);
