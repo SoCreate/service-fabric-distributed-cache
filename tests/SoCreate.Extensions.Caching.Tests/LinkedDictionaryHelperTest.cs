@@ -104,7 +104,7 @@ namespace SoCreate.Extensions.Caching.Tests
 
             var items = new Dictionary<string, CachedItem> {
                 { "1", new CachedItem(cachedValue, null, "2") },
-                { "2", new CachedItem(cachedValue, "1", "3", TimeSpan.FromMilliseconds(100), new DateTime(1000)) },
+                { "2", new CachedItem(cachedValue, "1", "3", TimeSpan.FromMilliseconds(100), DateTimeOffset.MinValue) },
                 { "3", new CachedItem(cachedValue, "2", null) }
             };
 
@@ -136,7 +136,7 @@ namespace SoCreate.Extensions.Caching.Tests
 
             var items = new Dictionary<string, CachedItem> {
                 { "1", new CachedItem(cachedValue, null, "2") },
-                { "2", new CachedItem(cachedValue, "1", "3", TimeSpan.FromMilliseconds(100), new DateTime(1000)) },
+                { "2", new CachedItem(cachedValue, "1", "3", TimeSpan.FromMilliseconds(100), DateTimeOffset.MinValue) },
                 { "3", new CachedItem(cachedValue, "2", null) }
             };
 
@@ -167,9 +167,9 @@ namespace SoCreate.Extensions.Caching.Tests
             var totalSize = cacheStoreMetadata.Size - cachedValue.Length;
 
             var items = new Dictionary<string, CachedItem> {
-                { "1", new CachedItem(cachedValue, null, "2", TimeSpan.FromMilliseconds(10), new DateTime(50)) },
+                { "1", new CachedItem(cachedValue, null, "2", TimeSpan.FromMilliseconds(10), DateTimeOffset.MinValue) },
                 { "2", new CachedItem(cachedValue, "1", "3") },
-                { "3", new CachedItem(cachedValue, "2", null, TimeSpan.FromMilliseconds(100), new DateTime(1000)) }
+                { "3", new CachedItem(cachedValue, "2", null, TimeSpan.FromMilliseconds(100), DateTimeOffset.MinValue) }
             };
 
             getCacheItem.Setup(mock => mock("1")).ReturnsAsync(await Task.FromResult(new ConditionalValue<CachedItem>(true, items["1"])));
