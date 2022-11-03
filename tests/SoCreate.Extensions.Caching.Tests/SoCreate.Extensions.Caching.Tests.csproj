@@ -12,9 +12,10 @@
     <PackageReference Include="AutoFixture.Xunit2" Version="4.11.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
     <PackageReference Include="Microsoft.ServiceFabric" Version="9.0.*" />
-    <PackageReference Include="Microsoft.ServiceFabric.Actors" Version="6.0.1017" />
+    <PackageReference Include="Microsoft.ServiceFabric.Actors" Version="6.0.1121" />
+    <PackageReference Include="Microsoft.ServiceFabric.Services.Remoting" Version="6.0.1121" />
     <PackageReference Include="Moq" Version="4.13.1" />
-    <PackageReference Include="ServiceFabric.Mocks" Version="6.0.*" />
+    <PackageReference Include="ServiceFabric.Mocks" Version="6.1.4" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1">
       <PrivateAssets>all</PrivateAssets>

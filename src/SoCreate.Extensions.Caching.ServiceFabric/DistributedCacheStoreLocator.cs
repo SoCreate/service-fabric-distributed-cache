@@ -1,18 +1,19 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.ServiceFabric.Services.Client;
+using Microsoft.ServiceFabric.Services.Communication.Client;
 using Microsoft.ServiceFabric.Services.Remoting.Client;
+using Microsoft.ServiceFabric.Services.Remoting.V2;
 using Microsoft.ServiceFabric.Services.Remoting.V2.FabricTransport.Client;
+using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Concurrent;
 using System.Fabric;
 using System.Fabric.Description;
 using System.Fabric.Query;
-using System.Threading.Tasks;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.ServiceFabric.Services.Communication.Client;
-using Microsoft.VisualStudio.Threading;
+using System.Threading.Tasks;
 
 namespace SoCreate.Extensions.Caching.ServiceFabric
 {
@@ -28,12 +29,14 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
         private AsyncLazy<ServicePartitionList> _partitionList;
         private readonly ConcurrentDictionary<Guid, IServiceFabricCacheStoreService> _cacheStores;
         private readonly ServiceFabricCacheOptions _options;
+        private readonly IServiceRemotingMessageSerializationProvider _serializationProvider;
 
         public DistributedCacheStoreLocator(IOptions<ServiceFabricCacheOptions> options)
         {
             _options = options.Value;
             _endpointName = _options.CacheStoreEndpointName ?? ListenerName;
             _retryTimeout = _options.RetryTimeout;
+            _serializationProvider = _options.SerializationProvider;
             _fabricClient = new FabricClient();
             _cacheStores = new ConcurrentDictionary<Guid, IServiceFabricCacheStoreService>();
             _serviceUri = new AsyncLazy<Uri>(LocateCacheStoreAsync);
@@ -54,7 +57,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
                 var proxyFactory = new ServiceProxyFactory((c) =>
                 {
-                    return new FabricTransportServiceRemotingClientFactory();
+                    return new FabricTransportServiceRemotingClientFactory(serializationProvider: _serializationProvider);
                 }, retrySettings);
 
                 return proxyFactory.CreateServiceProxy<IServiceFabricCacheStoreService>(serviceUri, resolvedPartition, TargetReplicaSelector.Default, _endpointName);

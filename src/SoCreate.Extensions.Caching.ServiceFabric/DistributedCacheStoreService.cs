@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Microsoft.Extensions.Internal;
+using Microsoft.ServiceFabric.Data;
+using Microsoft.ServiceFabric.Data.Collections;
+using Microsoft.ServiceFabric.Services.Communication.Runtime;
+using Microsoft.ServiceFabric.Services.Remoting.V2;
+using Microsoft.ServiceFabric.Services.Remoting.V2.FabricTransport.Runtime;
+using Microsoft.ServiceFabric.Services.Runtime;
+using System;
 using System.Collections.Generic;
 using System.Fabric;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Internal;
-using Microsoft.ServiceFabric.Data;
-using Microsoft.ServiceFabric.Data.Collections;
-using Microsoft.ServiceFabric.Services.Communication.Runtime;
-using Microsoft.ServiceFabric.Services.Remoting.V2.FabricTransport.Runtime;
-using Microsoft.ServiceFabric.Services.Runtime;
 
 namespace SoCreate.Extensions.Caching.ServiceFabric
 {
@@ -28,13 +29,15 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
         private readonly Action<string> _log;
         private readonly ISystemClock _systemClock;
         private int _partitionCount = 1;
+        protected IServiceRemotingMessageSerializationProvider _serializationProvider;
 
-        public DistributedCacheStoreService(StatefulServiceContext context, Action<string> log = null)
+        public DistributedCacheStoreService(StatefulServiceContext context, Action<string> log = null, IServiceRemotingMessageSerializationProvider serializationProvider = null)
             : base(context)
         {
             _serviceUri = context.ServiceName;
             _log = log;
             _systemClock = new SystemClock();
+            _serializationProvider = serializationProvider;
 
             if (!StateManager.TryAddStateSerializer(new CachedItemSerializer()))
             {
@@ -90,22 +93,22 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
             return null;
         }
-        
+
         public async Task SetCachedItemAsync(string key, byte[] value, TimeSpan? slidingExpiration, DateTimeOffset? absoluteExpiration)
         {
             if (slidingExpiration.HasValue)
             {
                 var now = _systemClock.UtcNow;
-                absoluteExpiration = now.AddMilliseconds(slidingExpiration.Value.TotalMilliseconds);                
+                absoluteExpiration = now.AddMilliseconds(slidingExpiration.Value.TotalMilliseconds);
             }
 
             var cacheStore = await StateManager.GetOrAddAsync<IReliableDictionary<string, CachedItem>>(CacheStoreName);
             var cacheStoreMetadata = await StateManager.GetOrAddAsync<IReliableDictionary<string, CacheStoreMetadata>>(CacheStoreMetadataName);
 
-            await RetryHelper.ExecuteWithRetry(StateManager, async (tx, cancellationToken, state) => 
+            await RetryHelper.ExecuteWithRetry(StateManager, async (tx, cancellationToken, state) =>
             {
                 _log?.Invoke($"Set cached item called with key: {key} on partition id: {Partition?.PartitionInfo.Id}");
-           
+
                 Func<string, Task<ConditionalValue<CachedItem>>> getCacheItem = async (string cacheKey) => await cacheStore.TryGetValueAsync(tx, cacheKey, LockMode.Update);
                 var linkedDictionaryHelper = new LinkedDictionaryHelper(getCacheItem, ByteSizeOffset);
 
@@ -165,7 +168,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
         protected override IEnumerable<ServiceReplicaListener> CreateServiceReplicaListeners()
         {
             yield return new ServiceReplicaListener(context =>
-                new FabricTransportServiceRemotingListener(context, this), ListenerName);
+                new FabricTransportServiceRemotingListener(context, this, serializationProvider: _serializationProvider), ListenerName);
         }
 
         protected override async Task RunAsync(CancellationToken cancellationToken)
@@ -193,11 +196,11 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
 
                 await RetryHelper.ExecuteWithRetry(StateManager, async (tx, cancelToken, state) =>
                 {
-                var metadata = await cacheStoreMetadata.TryGetValueAsync(tx, CacheStoreMetadataKey, LockMode.Update);
+                    var metadata = await cacheStoreMetadata.TryGetValueAsync(tx, CacheStoreMetadataKey, LockMode.Update);
 
-                if (metadata.HasValue && !string.IsNullOrEmpty(metadata.Value.FirstCacheKey))
-                {
-                    _log?.Invoke($"Size: {metadata.Value.Size}  Max Size: {GetMaxSizeInBytes()}");
+                    if (metadata.HasValue && !string.IsNullOrEmpty(metadata.Value.FirstCacheKey))
+                    {
+                        _log?.Invoke($"Size: {metadata.Value.Size}  Max Size: {GetMaxSizeInBytes()}");
 
                         if (metadata.Value.Size > GetMaxSizeInBytes())
                         {
@@ -252,7 +255,7 @@ namespace SoCreate.Extensions.Caching.ServiceFabric
             {
                 await cachedItemStore.SetAsync(tx, cacheItem.Key, cacheItem.Value);
             }
-    
+
             await cacheStoreMetadata.SetAsync(tx, CacheStoreMetadataKey, linkedDictionaryItemsChanged.CacheStoreMetadata);
         }
 
